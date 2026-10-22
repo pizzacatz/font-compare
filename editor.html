@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emerald Glyph Editor</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.ed { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+#cv { display: block; width: 100%; max-width: 768px; aspect-ratio: 1; touch-action: none; cursor: crosshair; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
+.panel { display: grid; gap: 12px; padding: 14px; }
+.panel h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.panel label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+.panel input[type=number], .panel input[type=text] { width: 110px; font: 500 13px var(--ui); color: var(--ink); background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 5px 7px; }
+.panel input[type=text].wide { width: 100%; }
+.strokes { display: grid; gap: 4px; max-height: 220px; overflow: auto; }
+.strokes button { text-align: left; font: 13px var(--ui); padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); cursor: pointer; }
+.strokes button[aria-pressed=true] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+#log { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; max-height: 160px; overflow: auto; color: var(--ink-2); }
+.hint { font-size: 12px; color: var(--ink-2); }
+.renders { display: flex; gap: 12px; align-items: center; }
+.renders span { font-size: 96px; line-height: 1; }
+.r-vector { font-family: var(--f-vector); color: var(--vector); } .r-game { font-family: var(--f-game); color: var(--game); }
+</style></head>
+<body><div class="wrap">
+<header class="top"><div><h1>Glyph editor</h1>
+<p class="lede">Edit the parametric centreline of one glyph of <b class="c-game">Emerald Rounded Game</b> over its <b class="c-vector">Pixel Vector</b> original. Points are in source pixels (baseline y=12, cap top y=3, x-height y=6, pixel centres at .5). Saved files go to <code>data/glyph_overrides/</code> in the font project.</p></div>
+<div class="btns"><a class="btn" href="index.html">← Compare app</a></div></header>
+
+<div class="toolbar">
+  <div class="field"><label class="lbl" for="ch">Character</label><div class="row"><input id="ch" type="text" maxlength="7" title="Type a character or a code point like U+E053" style="width:5em;font-size:20px;text-align:center"><button class="btn" id="load">Load</button><select id="existing"></select><select id="allglyphs" title="Every glyph in the sheet, including the game symbols"><option value="">All glyphs…</option></select></div></div>
+  <div class="field"><span class="lbl">Tool</span><div class="seg" id="tools">
+    <button type="button" data-tool="select" aria-pressed="true">Select / drag</button>
+    <button type="button" data-tool="poly">Polyline</button>
+    <button type="button" data-tool="arc">Arc</button>
+    <button type="button" data-tool="circle">Circle</button>
+    <button type="button" data-tool="dot">Dot</button>
+    <button type="button" data-tool="cut">Cut mask</button></div></div>
+  <div class="field"><span class="lbl">Snap</span><div class="seg" id="snaps">
+    <button type="button" data-snap="0.5" aria-pressed="true">½ px</button><button type="button" data-snap="0.25">¼ px</button><button type="button" data-snap="0.1">0.1</button><button type="button" data-snap="0">off</button></div></div>
+  <div class="field"><span class="lbl">Show</span><div class="row">
+    <button class="btn" id="showMask" aria-pressed="true">Pixels</button><button class="btn" id="showAuto" aria-pressed="true">Auto trace</button><button class="btn" id="showFill" aria-pressed="true">Stroked</button><button class="btn" id="theme" aria-pressed="false">Dark</button></div></div>
+</div>
+
+<div class="ed">
+  <div><canvas id="cv" width="768" height="768"></canvas>
+    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph).</p>
+    <div class="renders"><span class="r-vector" id="rv"></span><span class="r-game" id="rg"></span><span class="hint">← actual TTFs (Pixel Vector / Rounded Game as currently built)</span></div>
+  </div>
+  <aside class="sheet panel">
+    <h3>Glyph</h3>
+    <label>File name <input type="text" id="fname"></label>
+    <label>Applies to chars <input type="text" id="chars" class="wide" placeholder="N or N,Ñ"></label>
+    <label>Replace mask rows <span><input type="number" id="r0" min="0" max="16" step="1" style="width:60px"> – <input type="number" id="r1" min="0" max="16" step="1" style="width:60px"></span></label>
+    <label>Stroke width (px) <input type="number" id="gw" step="0.05" min="0.3" max="3"></label>
+    <label>Default joint radius <input type="number" id="gr" step="0.1" min="0" max="4"></label>
+    <label>Dot shape <select id="gds"><option value="circle">circle</option><option value="square">square</option><option value="rounded">rounded square</option></select></label>
+    <label>Dot corner radius (px) <input type="number" id="gdc" step="0.05" min="0" max="2"></label>
+    <label>Default join <select id="gj"><option value="round">round</option><option value="miter">miter (sharp)</option><option value="bevel">bevel (flat)</option></select></label>
+    <label>Clip to rows y <span><input type="number" id="cy0" step="0.25" style="width:60px" placeholder="min"> – <input type="number" id="cy1" step="0.25" style="width:60px" placeholder="max"></span></label>
+    <label>Clip to columns x <span><input type="number" id="cx0" step="0.25" style="width:60px" placeholder="min"> – <input type="number" id="cx1" step="0.25" style="width:60px" placeholder="max"></span></label>
+    <h3>Strokes</h3>
+    <div class="strokes" id="list"></div>
+    <div id="sprops"></div>
+    <div class="btns"><button class="btn" id="del">Delete stroke</button><button class="btn" id="dup">Duplicate</button><button class="btn" id="seed">Seed from auto trace</button></div>
+    <h3>Save</h3>
+    <div class="btns"><button class="btn" id="save" aria-pressed="true">Save JSON</button><button class="btn" id="rebuild">Save + rebuild + preview</button><button class="btn" id="remove">Remove override</button></div>
+    <div id="log"></div>
+  </aside>
+</div>
+</div>
+<script src="editor.js"></script></body></html>

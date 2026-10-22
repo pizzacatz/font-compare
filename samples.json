@@ -1,0 +1,45 @@
+[
+ {"group": "Pangrams", "lines": [
+  "The quick brown fox jumps over the lazy dog.",
+  "Sphinx of black quartz, judge my vow.",
+  "Pack my box with five dozen liquor jugs.",
+  "Hamburgefontsiv"
+ ]},
+ {"group": "In-game style", "lines": [
+  "MAY: Hi! I'm MAY. Are you the new kid in town?",
+  "PROF. BIRCH: Help! Somebody, please help me!",
+  "Wild ZIGZAGOON appeared!",
+  "TORCHIC used EMBER! It's super effective!",
+  "MUDKIP grew to Lv. 16!",
+  "Got away safely!",
+  "Would you like to save the game? Yes / No",
+  "The POKéMON CENTER is to the north. Rest up, then head for PETALBURG CITY.",
+  "May's TREECKO ♂ Lv.5   Brendan's MUDKIP ♀ Lv.5",
+  "Obtained the STONE BADGE! Used 3× POTION. Paid ¥500."
+ ]},
+ {"group": "Pokémon Emerald", "lines": [
+  "Pokémon Emerald",
+  "Hoenn region: Littleroot Town, Rustboro City, Mauville City, Sootopolis City.",
+  "Rayquaza descended from the Sky Pillar to calm Groudon and Kyogre."
+ ]},
+ {"group": "Spacing & lookalikes", "lines": [
+  "Il1 O0 rn m  cl d  vv w",
+  "AVATAR To Wa LT Ty Vo Yo",
+  "0123456789  12:34  3.14159  50%",
+  "iii lll jjj ttt fff"
+ ]},
+ {"group": "Punctuation & accents", "lines": [
+  "“Quoted” ‘single’ it’s … · - + = / ( ) < > & ; : ! ?",
+  "¿¡ ÀÁÂÄÇÈÉÊËÌÍÎÏÑÒÓÔÖŒÙÚÛÜ ßàáâäçèéêëìíîïñòóôöœùúûü ºª",
+  "crème brûlée, jalapeño, façade, naïve, Pokémon, Zoë"
+ ]},
+ {"group": "Game symbols (PUA)", "lines": [
+  "↑↓←→ ①②③④⑤⑥⑦⑧⑨ № ⊂",
+  "Lv   PP   ID     ",
+  "",
+  ""
+ ]},
+ {"group": "Paragraph", "lines": [
+  "There are many kinds of Pokémon in this world. People and Pokémon live together, helping each other. Some people play with Pokémon, some battle with them. But we don't know everything about Pokémon yet. There are still many mysteries to solve. That's why I study Pokémon every day."
+ ]}
+]

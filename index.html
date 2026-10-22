@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emerald Font Compare</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="f-vector">Pixel Vector</span><span class="vs">vs</span><span class="f-soft">Pixel Soft</span><span class="vs">vs</span><span class="f-round">Rounded</span><span class="vs">vs</span><span class="f-game">Rounded Game</span></h1>
+      <p class="lede">The fonts are drawn on top of each other. Where the outlines match you see one shape. Where they differ, the edges split into <b class="c-vector">Pixel Vector</b>, <b class="c-soft">Pixel Soft</b>, <b class="c-round">Rounded</b> and <b class="c-game">Rounded Game</b> (same outlines as Rounded, game spacing).</p>
+    </div>
+    <div class="legend" id="legend" role="group" aria-label="Fonts shown"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="field">
+      <span class="lbl">View</span>
+      <div class="seg" role="group">
+        <button type="button" data-mode="overlay">Overlay</button>
+        <button type="button" data-mode="blink">Blink</button>
+        <button type="button" data-mode="stacked">Stacked</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="size">Size <output id="size-out">32px</output></label>
+      <div class="row">
+        <input type="range" id="size" min="8" max="160" step="1" value="32">
+        <button type="button" class="btn" id="size-16">16px, game size</button>
+        <button type="button" class="btn" id="snap" aria-pressed="false">Snap ×16</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lbl">Rendering</span>
+      <div class="row">
+        <button type="button" class="btn" id="aa" aria-pressed="true">Antialias</button>
+        <button type="button" class="btn" id="shadow" aria-pressed="false">Game shadow</button>
+        <button type="button" class="btn" id="theme" aria-pressed="false">Dark</button>
+        <button type="button" class="btn" id="match" aria-pressed="true" title="Add 1 px tracking and a half-pixel shift to the game-spaced fonts so their advances equal the Rounded font">Match advances</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="ls">Tracking <output id="ls-out">0px</output></label>
+      <div class="row"><input type="range" id="ls" min="-2" max="8" step="0.5" value="0"></div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="sample">Sample</label>
+      <select id="sample"></select>
+    </div>
+  </div>
+
+  <section class="sheet specimen" aria-label="Specimen">
+    <div class="stage-head">
+      <span id="stage-hint"></span>
+      <div class="blink-ctl" id="blink-ctl" hidden>
+        <span class="now" id="now">Pixel Vector</span>
+        <button type="button" class="btn" id="blink-play">Pause</button>
+        <button type="button" class="btn" id="blink-next">Next</button>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="paper" id="paper" data-mode="overlay">
+        <pre class="layer l-vector" id="layer-vector" aria-hidden="true"></pre>
+        <pre class="layer l-soft" id="layer-soft" aria-hidden="true"></pre>
+        <pre class="layer l-round" id="layer-round" aria-hidden="true"></pre>
+        <pre class="layer l-game" id="layer-game" aria-hidden="true"></pre>
+        <textarea id="src" spellcheck="false" wrap="off" autocomplete="off" aria-label="Specimen text"></textarea>
+      </div>
+      <div class="stacked" id="stacked" hidden></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="g-h">
+    <div class="sec-head">
+      <div>
+        <h2 id="g-h">Glyph by glyph</h2>
+        <p>Every mapped character, drawn in <span id="cmp-label"></span> at the same size and compared pixel by pixel. The score is the share of ink that doesn't overlap, so 0% would mean identical shapes. Pick a glyph to see it large.</p>
+      </div>
+      <div class="sec-tools">
+        <span id="g-status">Measuring…</span>
+        <label class="lbl" for="cmp">Compare</label>
+        <select id="cmp">
+          <option value="round">Rounded vs Pixel Vector</option>
+          <option value="game">Rounded Game vs Pixel Vector</option>
+          <option value="soft">Pixel Soft vs Pixel Vector</option>
+        </select>
+        <label class="lbl" for="set">Set</label>
+        <select id="set">
+          <option value="basic">Letters &amp; digits</option>
+          <option value="all">All mapped</option>
+          <option value="pua">Game symbols</option>
+        </select>
+        <label class="lbl" for="sort">Order</label>
+        <select id="sort">
+          <option value="diff">Most different first</option>
+          <option value="code">Character order</option>
+        </select>
+      </div>
+    </div>
+    <div class="glyph-layout">
+      <div class="grid" id="grid"></div>
+      <aside class="sheet loupe" aria-label="Selected glyph">
+        <canvas id="loupe" width="340" height="340"></canvas>
+        <div class="lp-meta"><span class="lp-cp" id="lp-cp"></span><span class="lp-score" id="lp-score"></span></div>
+        <p class="lp-key">Dashed lines: cap height (9 px) and x-height (6 px). Solid: baseline. Grey verticals: the glyph's advance in each font. The faint grid is the 16 px source pixel cell.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section aria-labelledby="m-h">
+    <div class="sec-head">
+      <div><h2 id="m-h">Metrics</h2><p>Read from the font files with fontTools (1600 units per em, 100 units per source pixel).</p></div>
+    </div>
+    <div class="sheet tbl-wrap"><table>
+      <thead><tr><th scope="col">Measure</th><th scope="col"><span class="sw vector"></span>Pixel Vector</th><th scope="col"><span class="sw soft"></span>Pixel Soft</th><th scope="col"><span class="sw round"></span>Rounded</th><th scope="col"><span class="sw game"></span>Rounded Game</th></tr></thead>
+      <tbody id="metrics"></tbody>
+    </table></div>
+    <p class="metrics-note">All four share the same vertical metrics, so lines align exactly when stacked. The Rounded font adds 100 units (1 px) to every advance and shifts outlines right by half a pixel, which is why it runs wider in the overlay. Rounded Game uses the same outlines with the game advances, so it overlays the pixel fonts without any correction.</p>
+  </section>
+
+  <footer><a href="editor.html">Open the glyph editor</a> (needs <code>python3 edit_server.py</code>). Fonts from <code>../pokemon-custom-emerald-font/build/fonts</code>. Run <code>./sync-fonts.sh</code> after rebuilding them, <code>./serve.sh</code> to open the app at http://localhost:8766. Samples live in <code>samples.json</code>.</footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
