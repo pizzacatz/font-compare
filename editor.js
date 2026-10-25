@@ -5,11 +5,13 @@ const K = 0.5523, S = 48;                       // canvas px per source px (768 
 const cv = $('cv'), ctx = cv.getContext('2d');
 let mapping = null, mask = null, auto = null, spec = null, sel = { s: -1, p: -1 }, tool = 'select', snap = 0.5;
 let draft = null, drag = null, name = '';
-/* The game's five Latin fonts. Normal's data lives in data/, the others in data/<variant>/ of the font project. */
+/* Emerald's five Latin fonts and pokeemerald-expansion's four. Normal's data lives in data/, the others in data/<variant>/ of the font project. */
 const VARIANTS = {
   normal: { label: 'Normal', base: 12, file: '' }, narrow: { label: 'Narrow', base: 12, file: 'Narrow' },
   small: { label: 'Small', base: 11, file: 'Small' }, short: { label: 'Short', base: 11, file: 'Short' },
   small_narrow: { label: 'Small Narrow', base: 11, file: 'SmallNarrow' },
+  narrower: { label: 'Narrower', base: 12, file: 'Narrower' }, small_narrower: { label: 'Small Narrower', base: 11, file: 'SmallNarrower' },
+  short_narrow: { label: 'Short Narrow', base: 11, file: 'ShortNarrow' }, short_narrower: { label: 'Short Narrower', base: 11, file: 'ShortNarrower' },
 };
 let variant = 'normal', guides = [3, 6, 12];
 try { const v = localStorage.getItem('efc:editor-variant'); if (v in VARIANTS) variant = v; } catch {}

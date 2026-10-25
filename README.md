@@ -3,8 +3,8 @@
 A local, no-build web app for comparing fonts glyph by glyph, plus a parametric glyph editor. It was
 written to tune [Emerald Rounded](https://github.com/pizzacatz/pokemon-custom-emerald-font), the
 smooth remake of Pokémon Emerald's dialogue font, against the original pixel font, and it ships with
-those four fonts in `fonts/` (`sync-fonts.sh` also copies the project's Narrow, Small, Short and Small
-Narrow fonts there for the editor).
+those four fonts in `fonts/` (`sync-fonts.sh` also copies the project's other game fonts there for the
+editor).
 
 ![Compare sheet](screenshot.png)
 
@@ -46,7 +46,8 @@ circles, dots (round, square, rounded square), join styles, cut masks and row/co
 number is editable in the side panel, and the stroked result is previewed live and overlaid on the
 pixel original.
 
-- The *Font* menu picks one of the game's five Latin fonts: Normal, Narrow, Small, Short, Small Narrow.
+- The *Font* menu picks one of the game's Latin fonts: Normal, Narrow, Small, Short, Small Narrow, and
+  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower.
   Each has its own overrides, pixel grid and guides (cap top, x-height, baseline); the choice is
   remembered, and `editor.html?font=small&ch=a` opens a font and glyph directly.
 - Open any glyph by typing it, by code point (`U+E053`), or from the "All glyphs" picker that lists

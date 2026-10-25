@@ -1,6 +1,7 @@
 """Local server for the compare app + glyph editor.
 Serves this folder at /, the font project at /fp/, and JSON endpoints. Every endpoint takes a font
-variant (normal, narrow, small, short, small_narrow; default normal): Normal's overrides live in
+variant (normal, narrow, small, short, small_narrow, and pokeemerald-expansion's narrower, small_narrower,
+short_narrow, short_narrower; default normal): Normal's overrides live in
 ../pokemon-custom-emerald-font/data/glyph_overrides/, the others in data/<variant>/glyph_overrides/.
   GET  /api/overrides?variant=v          -> override files of that font with their specs
   POST /api/save     {variant, name, spec} -> writes the override (a ported glyph is then marked "hand",
@@ -13,7 +14,7 @@ usage: python3 edit_server.py [port]   (default 8768)
 import http.server, json, os, sys, subprocess, urllib.parse, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 FP = os.path.abspath(os.path.join(HERE, '..', 'pokemon-custom-emerald-font'))
-VARIANTS = ('normal', 'narrow', 'small', 'short', 'small_narrow')
+VARIANTS = ('normal', 'narrow', 'small', 'short', 'small_narrow', 'narrower', 'small_narrower', 'short_narrow', 'short_narrower')
 
 def data_dir(variant):
     return os.path.join(FP, 'data') if variant == 'normal' else os.path.join(FP, 'data', variant)
