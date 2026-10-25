@@ -3,7 +3,8 @@
 A local, no-build web app for comparing fonts glyph by glyph, plus a parametric glyph editor. It was
 written to tune [Emerald Rounded](https://github.com/pizzacatz/pokemon-custom-emerald-font), the
 smooth remake of Pokémon Emerald's dialogue font, against the original pixel font, and it ships with
-those four fonts in `fonts/`.
+those four fonts in `fonts/` (`sync-fonts.sh` also copies the project's Narrow, Small, Short and Small
+Narrow fonts there for the editor).
 
 ![Compare sheet](screenshot.png)
 
@@ -45,11 +46,19 @@ circles, dots (round, square, rounded square), join styles, cut masks and row/co
 number is editable in the side panel, and the stroked result is previewed live and overlaid on the
 pixel original.
 
+- The *Font* menu picks one of the game's five Latin fonts: Normal, Narrow, Small, Short, Small Narrow.
+  Each has its own overrides, pixel grid and guides (cap top, x-height, baseline); the choice is
+  remembered, and `editor.html?font=small&ch=a` opens a font and glyph directly.
 - Open any glyph by typing it, by code point (`U+E053`), or from the "All glyphs" picker that lists
-  the game symbols too.
+  the game symbols too. A glyph ported from Normal shows how it was ported in the log.
+- Click a stroke in the list to edit it on its own: drag its points, set radii, bulges and angles in
+  the panel, or edit the whole stroke as raw JSON in the box under its properties (*Apply stroke JSON*).
 - *Seed from auto trace* starts from the generated model; *Save* writes
-  `data/glyph_overrides/<name>.json` in the font project; *Rebuild* regenerates the font and reloads
-  it in the sheet. Errors in an override are reported in the log with the glyph name.
+  `data/glyph_overrides/<name>.json` (Normal) or `data/<font>/glyph_overrides/<name>.json` in the font
+  project and marks a ported glyph as hand-edited so re-porting never replaces it; *Rebuild*
+  regenerates that font's Rounded Game and reloads it. *Re-port from Normal* (other fonts only)
+  replaces the glyph with a fresh port of Normal's override. Errors in an override are reported in
+  the log with the glyph name.
 - The JSON format is documented in the font project's README.
 
 ## Adapting it to other fonts

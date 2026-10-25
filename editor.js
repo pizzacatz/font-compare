@@ -5,6 +5,27 @@ const K = 0.5523, S = 48;                       // canvas px per source px (768 
 const cv = $('cv'), ctx = cv.getContext('2d');
 let mapping = null, mask = null, auto = null, spec = null, sel = { s: -1, p: -1 }, tool = 'select', snap = 0.5;
 let draft = null, drag = null, name = '';
+/* The game's five Latin fonts. Normal's data lives in data/, the others in data/<variant>/ of the font project. */
+const VARIANTS = {
+  normal: { label: 'Normal', base: 12, file: '' }, narrow: { label: 'Narrow', base: 12, file: 'Narrow' },
+  small: { label: 'Small', base: 11, file: 'Small' }, short: { label: 'Short', base: 11, file: 'Short' },
+  small_narrow: { label: 'Small Narrow', base: 11, file: 'SmallNarrow' },
+};
+let variant = 'normal', guides = [3, 6, 12];
+try { const v = localStorage.getItem('efc:editor-variant'); if (v in VARIANTS) variant = v; } catch {}
+const params = new URLSearchParams(location.search);   // editor.html?font=small&ch=a
+if (params.get('font') in VARIANTS) variant = params.get('font');
+const dataUrl = (path) => (variant === 'normal' ? '/fp/data/' : `/fp/data/${variant}/`) + path;
+const gameName = () => variant === 'normal' ? 'Emerald Rounded Game' : `Emerald Rounded ${VARIANTS[variant].label} Game`;
+const vectorName = () => variant === 'normal' ? 'Pixel Vector' : `Pixel Vector ${VARIANTS[variant].label}`;
+function useFonts(bust) {
+  // live renders of the two TTFs of the current font (copied into fonts/ by sync-fonts.sh)
+  const f = VARIANTS[variant].file, q = bust ? `?v=${Date.now()}` : '', id = `${variant}${q ? Date.now() : ''}`;
+  const st = document.createElement('style');
+  st.textContent = `@font-face { font-family: "Ed Vector ${id}"; src: url("fonts/EmeraldPixelVector${f}-Regular.ttf${q}"); }
+    @font-face { font-family: "Ed Game ${id}"; src: url("fonts/EmeraldRounded${f}Game-Regular.ttf${q}"); }`;
+  document.head.appendChild(st); $('rv').style.fontFamily = `"Ed Vector ${id}"`; $('rg').style.fontFamily = `"Ed Game ${id}"`;
+}
 
 const snapv = (v) => snap ? Math.round(v / snap) * snap : Math.round(v * 1000) / 1000;
 const toPx = (e) => { const r = cv.getBoundingClientRect(); return [snapv((e.clientX - r.left) / r.width * 16), snapv((e.clientY - r.top) / r.height * 16)]; };
@@ -93,13 +114,13 @@ function draw() {
   }
   // grid
   ctx.lineWidth = 1;
-  for (let i = 0; i <= 16; i++) { ctx.strokeStyle = [3, 6, 12].includes(i) ? css('--ink-2') : css('--rule'); ctx.beginPath(); ctx.moveTo(0, i * S + .5); ctx.lineTo(cv.width, i * S + .5); ctx.stroke(); ctx.strokeStyle = css('--rule'); ctx.beginPath(); ctx.moveTo(i * S + .5, 0); ctx.lineTo(i * S + .5, cv.height); ctx.stroke(); }
+  for (let i = 0; i <= 16; i++) { ctx.strokeStyle = guides.includes(i) ? css('--ink-2') : css('--rule'); ctx.beginPath(); ctx.moveTo(0, i * S + .5); ctx.lineTo(cv.width, i * S + .5); ctx.stroke(); ctx.strokeStyle = css('--rule'); ctx.beginPath(); ctx.moveTo(i * S + .5, 0); ctx.lineTo(i * S + .5, cv.height); ctx.stroke(); }
   if (mapping) { const adv = mapping.width; ctx.strokeStyle = css('--round'); ctx.beginPath(); ctx.moveTo(adv * S + .5, 0); ctx.lineTo(adv * S + .5, cv.height); ctx.stroke(); }
   // auto-traced centreline (generated model) for reference
   if (auto && $('showAuto').getAttribute('aria-pressed') === 'true') {
     ctx.strokeStyle = css('--ink-2'); ctx.setLineDash([6, 4]); ctx.lineWidth = 2;
     for (const s of auto.strokes) ctx.stroke(pathOf({ segs: s.beziers, closed: s.closed }));
-    for (const [x, y, r] of auto.dots) { ctx.beginPath(); ctx.arc(x * S, y * S, r * S, 0, 7); ctx.stroke(); }
+    for (const d of auto.dots) { const { x, y, r } = Array.isArray(d) ? { x: d[0], y: d[1], r: d[2] } : d; ctx.beginPath(); ctx.arc(x * S, y * S, r * S, 0, 7); ctx.stroke(); }
     ctx.setLineDash([]);
   }
   if (!spec) return;
@@ -151,6 +172,7 @@ function renderList() {
     return; }
   if (sel.s < 0) return;
   const st = spec.strokes[sel.s];
+  strokeJson(P, st);
   if (st.cut) { const l = document.createElement('div'); l.className = 'hint'; l.textContent = 'Cut mask: drag corners; Delete removes the selected corner (or the mask when no corner is selected).'; P.appendChild(l); return; }
   const add = (label, html) => { const l = document.createElement('label'); l.innerHTML = `<span>${label}</span>${html}`; P.appendChild(l); return l.lastElementChild; };
   add('Stroke width (blank = glyph)', `<input type="number" step="0.05" min="0.3" value="${st.width ?? ''}">`).onchange = (e) => { if (e.target.value === '') delete st.width; else st.width = +e.target.value; renderList(); draw(); };
@@ -177,6 +199,17 @@ function renderList() {
     }
   }
 }
+function strokeJson(P, st) {
+  // every field of the selected stroke as editable JSON: points as [x, y, joint radius, bulge], arc, circle, cut, width, join...
+  const box = document.createElement('div'); box.className = 'field';
+  const ta = document.createElement('textarea'); ta.spellcheck = false; ta.setAttribute('aria-label', 'Stroke JSON');
+  ta.value = JSON.stringify(st).replace(/\],\[/g, '],\n [');
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = 'Apply stroke JSON';
+  b.onclick = () => { try { const v = JSON.parse(ta.value); if (typeof v !== 'object' || Array.isArray(v) || !v) throw new Error('expected an object');
+      spec.strokes[sel.s] = v; renderList(); draw(); log(`Stroke ${sel.s + 1} replaced from JSON.`); } catch (e) { log('Stroke JSON not applied: ' + e.message); } };
+  const lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = `Stroke ${sel.s + 1} as JSON`;
+  box.append(lbl, ta, b); P.appendChild(box);
+}
 function fillGlyphFields() { $('fname').value = name; $('chars').value = (Array.isArray(spec.char) ? spec.char : [spec.char]).join(','); $('r0').value = spec.rows?.[0] ?? 0; $('r1').value = spec.rows?.[1] ?? 16; $('gw').value = spec.width ?? 1; $('gr').value = spec.joint_radius ?? 1; $('gj').value = spec.join ?? 'round'; $('gds').value = spec.dot_shape ?? 'circle'; $('gdc').value = spec.dot_corner ?? 0.25; spec.dots = (spec.dots || []).map(normDot); $('cy0').value = spec.clip_y?.[0] ?? ''; $('cy1').value = spec.clip_y?.[1] ?? ''; $('cx0').value = spec.clip_x?.[0] ?? ''; $('cx1').value = spec.clip_x?.[1] ?? ''; }
 function readGlyphFields() { name = $('fname').value.trim(); const raw = $('chars').value; let cs = raw.split(',').map((s) => s.trim()).filter(Boolean); if (!cs.length && raw.includes(',')) cs = [',']; spec.char = cs.length === 1 ? cs[0] : cs; spec.rows = [+$('r0').value, +$('r1').value]; spec.width = +$('gw').value; spec.joint_radius = +$('gr').value; spec.join = $('gj').value; spec.dot_shape = $('gds').value; spec.dot_corner = +$('gdc').value; if ($('cy0').value !== '' && $('cy1').value !== '') spec.clip_y = [+$('cy0').value, +$('cy1').value]; else delete spec.clip_y; if ($('cx0').value !== '' && $('cx1').value !== '') spec.clip_x = [+$('cx0').value, +$('cx1').value]; else delete spec.clip_x; }
 for (const id of ['chars', 'r0', 'r1', 'gw', 'gr', 'gj', 'gds', 'gdc', 'cy0', 'cy1', 'cx0', 'cx1', 'fname']) $(id).onchange = () => { readGlyphFields(); draw(); };
@@ -187,21 +220,24 @@ function parseCharInput(v) {
   return [...v][0];
 }
 async function load(ch) {
-  const mp = await (await fetch('/fp/data/mapping.json')).json();
-  const cps = await (await fetch('/fp/data/codepoints.json')).json();
+  const mp = await (await fetch(dataUrl('mapping.json'))).json();
+  const cps = await (await fetch(dataUrl('codepoints.json'))).json();
   const cp = ch.codePointAt(0);
   const gid = Object.keys(mp).find((k) => mp[k].unicode.includes(cp)) || Object.keys(cps).find((k) => cps[k].codepoints.includes(cp));
   if (!gid) { log(`No glyph for "${ch}" (U+${cp.toString(16).toUpperCase().padStart(4, '0')}) in the source font.`); return; }
   const info = cps[gid] || {}; const label = `${ch}  U+${cp.toString(16).toUpperCase().padStart(4, '0')}${info.name ? '  ' + info.name : ''}`;
   $('ch').value = ch; log(`Glyph ${gid}: ${label}`);
   mapping = mp[gid];
-  mask = await (await fetch(`/fp/data/masks/${String(gid).padStart(3, '0')}.json`)).json();
-  auto = await (await fetch(`/fp/data/svg_smooth/${String(gid).padStart(3, '0')}.json`)).json();
-  const ov = await (await fetch('/api/overrides')).json();
+  mask = await (await fetch(dataUrl(`masks/${String(gid).padStart(3, '0')}.json`))).json();
+  auto = await (await fetch(dataUrl(`svg_smooth/${String(gid).padStart(3, '0')}.json`))).json();
+  const top = (c) => Object.values(mp).find((e) => e.unicode.includes(c.codePointAt(0)))?.ink_ymin;
+  guides = [top('H'), top('x'), VARIANTS[variant].base];
+  const ov = await (await fetch(`/api/overrides?variant=${variant}`)).json();
   const hit = Object.entries(ov).find(([n, s]) => (Array.isArray(s.char) ? s.char : [s.char]).includes(ch));
-  if (hit) { [name, spec] = [hit[0], hit[1]]; log(`Loaded override ${name}.json`); }
+  if (hit) { [name, spec] = [hit[0], hit[1]]; log(`Loaded ${VARIANTS[variant].label} override ${name}.json` + (spec._ported ? ` (${spec._ported})` : '')); }
   else { name = `u${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`; spec = { char: ch, rows: [0, 16], width: 1.0, joint_radius: 1.0, strokes: [], dots: [] }; log(`No override yet for "${ch}": starting empty (auto trace shown dashed). Use "Seed from auto trace" or draw.`); }
   $('rv').textContent = ch; $('rg').textContent = ch;
+  $('report').hidden = variant === 'normal';
   sel = { s: -1, p: -1 }; fillGlyphFields(); renderList(); draw();
   const sel2 = $('existing'); sel2.replaceChildren(...[['', 'overrides…'], ...Object.entries(ov).map(([n, s]) => [n, `${n} (${Array.isArray(s.char) ? s.char.join(',') : s.char})`])].map(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; return o; }));
 }
@@ -245,9 +281,9 @@ for (const b of document.querySelectorAll('#tools button')) b.onclick = () => { 
 for (const b of document.querySelectorAll('#snaps button')) b.onclick = () => { snap = +b.dataset.snap; for (const o of document.querySelectorAll('#snaps button')) o.setAttribute('aria-pressed', String(o === b)); };
 for (const id of ['showMask', 'showAuto', 'showFill']) $(id).onclick = () => { $(id).setAttribute('aria-pressed', String($(id).getAttribute('aria-pressed') !== 'true')); draw(); };
 $('load').onclick = () => load(parseCharInput($('ch').value) || 'N'); $('ch').onkeydown = (e) => { if (e.key === 'Enter') $('load').click(); };
-(async () => {
-  const cps = await (await fetch('/fp/data/codepoints.json')).json(); const mp = await (await fetch('/fp/data/mapping.json')).json();
-  const sel = $('allglyphs'); const groups = { charmap: 'Text glyphs', pua: 'Symbols (PUA)', 'pua+unicode-equivalent': 'Symbols (PUA + Unicode)' };
+async function fillAllGlyphs() {
+  const cps = await (await fetch(dataUrl('codepoints.json'))).json(); const mp = await (await fetch(dataUrl('mapping.json'))).json();
+  const sel = $('allglyphs'); sel.replaceChildren(new Option('All glyphs…', '')); const groups = { charmap: 'Text glyphs', pua: 'Symbols (PUA)', 'pua+unicode-equivalent': 'Symbols (PUA + Unicode)' };
   const og = {}; for (const [k, v] of Object.entries(groups)) { og[k] = document.createElement('optgroup'); og[k].label = v; sel.appendChild(og[k]); }
   for (const gid of Object.keys(cps).map(Number).sort((a, b) => a - b)) {
     const e = cps[gid]; if (!mp[gid] || !mp[gid].ink) continue;
@@ -256,22 +292,33 @@ $('load').onclick = () => load(parseCharInput($('ch').value) || 'N'); $('ch').on
     (og[e.source] || og.charmap).appendChild(o);
   }
   sel.onchange = (ev) => { if (ev.target.value) load(ev.target.value); };
-})();
-$('existing').onchange = async (e) => { const ov = await (await fetch('/api/overrides')).json(); const s = ov[e.target.value]; if (s) { const c = Array.isArray(s.char) ? s.char[0] : s.char; $('ch').value = c; load(c); } };
+}
+function setVariant(v) {
+  variant = v; $('variant').value = v; try { localStorage.setItem('efc:editor-variant', v); } catch {}
+  const b = VARIANTS[v].base;
+  $('famGame').textContent = gameName(); $('famVector').textContent = vectorName();
+  $('metricsNote').textContent = `baseline y=${b}; the darker grid lines mark cap top, x-height and baseline`;
+  $('ovrDir').textContent = v === 'normal' ? 'data/glyph_overrides/' : `data/${v}/glyph_overrides/`;
+  useFonts(false); fillAllGlyphs();
+}
+$('variant').onchange = (e) => { setVariant(e.target.value); load(parseCharInput($('ch').value) || 'N'); };
+$('existing').onchange = async (e) => { const ov = await (await fetch(`/api/overrides?variant=${variant}`)).json(); const s = ov[e.target.value]; if (s) { const c = Array.isArray(s.char) ? s.char[0] : s.char; $('ch').value = c; load(c); } };
 $('del').onclick = () => { if (sel.s >= 0) { spec.strokes.splice(sel.s, 1); sel = { s: -1, p: -1 }; renderList(); draw(); } };
 $('dup').onclick = () => { if (sel.s >= 0) { spec.strokes.push(JSON.parse(JSON.stringify(spec.strokes[sel.s]))); sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); draw(); } };
 $('seed').onclick = seed;
-async function save() { readGlyphFields(); const r = await (await fetch('/api/save', { method: 'POST', body: JSON.stringify({ name, spec }) })).json(); log(r.ok ? `Saved ${r.file}` : JSON.stringify(r)); return r.ok; }
+async function save() { readGlyphFields(); const r = await (await fetch('/api/save', { method: 'POST', body: JSON.stringify({ variant, name, spec }) })).json(); log(r.ok ? `Saved ${VARIANTS[variant].label} ${r.file}` : JSON.stringify(r)); return r.ok; }
 $('save').onclick = save;
-$('rebuild').onclick = async () => { if (!(await save())) return; log('Rebuilding Emerald Rounded Game… (10–20 s)'); const chars = (Array.isArray(spec.char) ? spec.char : [spec.char]).join('');
-  const r = await (await fetch('/api/rebuild', { method: 'POST', body: JSON.stringify({ chars }) })).json(); log((r.ok ? 'Rebuilt. ' : 'Rebuild FAILED. ') + r.log);
-  // reload the TTF for the live render
-  const v = Date.now(); const st = document.createElement('style'); st.textContent = `@font-face { font-family: "Cmp Game"; src: url("fonts/EmeraldRoundedGame-Regular.ttf?v=${v}"); }`; document.head.appendChild(st); $('rg').style.fontFamily = `"Cmp Game"`; };
-$('remove').onclick = async () => { if (!confirm(`Delete ${name}.json? The glyph goes back to the automatic trace.`)) return; await fetch('/api/delete', { method: 'POST', body: JSON.stringify({ name }) }); log(`Removed ${name}.json`); };
+$('rebuild').onclick = async () => { if (!(await save())) return; log(`Rebuilding ${gameName()}… (10–20 s)`); const chars = (Array.isArray(spec.char) ? spec.char : [spec.char]).join('');
+  const r = await (await fetch('/api/rebuild', { method: 'POST', body: JSON.stringify({ variant, chars }) })).json(); log((r.ok ? 'Rebuilt. ' : 'Rebuild FAILED. ') + r.log);
+  useFonts(true); };   // reload the TTFs for the live render
+$('remove').onclick = async () => { if (!confirm(`Delete ${VARIANTS[variant].label} ${name}.json? The glyph goes back to the automatic trace.`)) return; await fetch('/api/delete', { method: 'POST', body: JSON.stringify({ variant, name }) }); log(`Removed ${name}.json`); };
+$('report').onclick = async () => { const ch = $('ch').value; if (!confirm(`Replace the ${VARIANTS[variant].label} "${ch}" with a fresh port of Normal's override? Your edits to it are lost.`)) return;
+  const r = await (await fetch('/api/port', { method: 'POST', body: JSON.stringify({ variant, char: ch }) })).json(); log((r.ok ? 'Re-ported. ' : 'Re-port FAILED. ') + r.log); if (r.ok) load(ch); };
 /* theme: shared with the compare app's saved setting, persisted separately too */
 function applyTheme(dark) { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; $('theme').setAttribute('aria-pressed', String(dark)); try { localStorage.setItem('efc:editor-dark', dark ? '1' : '0'); } catch {} draw(); }
 let darkInit = false; try { const e = localStorage.getItem('efc:editor-dark'); darkInit = e !== null ? e === '1' : !!JSON.parse(localStorage.getItem('efc:v3') || '{}').dark; } catch {}
 if (!darkInit && !localStorage.getItem('efc:editor-dark')) darkInit = matchMedia('(prefers-color-scheme: dark)').matches;
 applyTheme(darkInit);
 $('theme').onclick = () => applyTheme(document.documentElement.dataset.theme !== 'dark');
-$('ch').value = 'N'; load('N');
+setVariant(variant);
+{ const c = parseCharInput(params.get('ch') || '') || 'N'; $('ch').value = c; load(c); }

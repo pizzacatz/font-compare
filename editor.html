@@ -13,6 +13,7 @@
 .strokes { display: grid; gap: 4px; max-height: 220px; overflow: auto; }
 .strokes button { text-align: left; font: 13px var(--ui); padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); cursor: pointer; }
 .strokes button[aria-pressed=true] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.panel textarea { width: 100%; min-height: 110px; font: 12px/1.4 ui-monospace, monospace; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 6px 7px; resize: vertical; }
 .btns { display: flex; flex-wrap: wrap; gap: 6px; }
 #log { font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; max-height: 160px; overflow: auto; color: var(--ink-2); }
 .hint { font-size: 12px; color: var(--ink-2); }
@@ -22,10 +23,12 @@
 </style></head>
 <body><div class="wrap">
 <header class="top"><div><h1>Glyph editor</h1>
-<p class="lede">Edit the parametric centreline of one glyph of <b class="c-game">Emerald Rounded Game</b> over its <b class="c-vector">Pixel Vector</b> original. Points are in source pixels (baseline y=12, cap top y=3, x-height y=6, pixel centres at .5). Saved files go to <code>data/glyph_overrides/</code> in the font project.</p></div>
+<p class="lede">Edit the parametric centreline of one glyph of <b class="c-game" id="famGame">Emerald Rounded Game</b> over its <b class="c-vector" id="famVector">Pixel Vector</b> original. Points are in source pixels (<span id="metricsNote">baseline y=12, cap top y=3, x-height y=6</span>, pixel centres at .5). Saved files go to <code id="ovrDir">data/glyph_overrides/</code> in the font project.</p></div>
 <div class="btns"><a class="btn" href="index.html">← Compare app</a></div></header>
 
 <div class="toolbar">
+  <div class="field"><label class="lbl" for="variant">Font</label><select id="variant" title="Which of the game's five Latin fonts to edit">
+    <option value="normal">Normal</option><option value="narrow">Narrow</option><option value="small">Small</option><option value="short">Short</option><option value="small_narrow">Small Narrow</option></select></div>
   <div class="field"><label class="lbl" for="ch">Character</label><div class="row"><input id="ch" type="text" maxlength="7" title="Type a character or a code point like U+E053" style="width:5em;font-size:20px;text-align:center"><button class="btn" id="load">Load</button><select id="existing"></select><select id="allglyphs" title="Every glyph in the sheet, including the game symbols"><option value="">All glyphs…</option></select></div></div>
   <div class="field"><span class="lbl">Tool</span><div class="seg" id="tools">
     <button type="button" data-tool="select" aria-pressed="true">Select / drag</button>
@@ -42,7 +45,7 @@
 
 <div class="ed">
   <div><canvas id="cv" width="768" height="768"></canvas>
-    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph).</p>
+    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Any selected stroke can also be edited as raw JSON under its properties.</p>
     <div class="renders"><span class="r-vector" id="rv"></span><span class="r-game" id="rg"></span><span class="hint">← actual TTFs (Pixel Vector / Rounded Game as currently built)</span></div>
   </div>
   <aside class="sheet panel">
@@ -62,7 +65,7 @@
     <div id="sprops"></div>
     <div class="btns"><button class="btn" id="del">Delete stroke</button><button class="btn" id="dup">Duplicate</button><button class="btn" id="seed">Seed from auto trace</button></div>
     <h3>Save</h3>
-    <div class="btns"><button class="btn" id="save" aria-pressed="true">Save JSON</button><button class="btn" id="rebuild">Save + rebuild + preview</button><button class="btn" id="remove">Remove override</button></div>
+    <div class="btns"><button class="btn" id="save" aria-pressed="true">Save JSON</button><button class="btn" id="rebuild">Save + rebuild + preview</button><button class="btn" id="remove">Remove override</button><button class="btn" id="report" hidden title="Replace this glyph with a fresh port of the Normal font's override">Re-port from Normal</button></div>
     <div id="log"></div>
   </aside>
 </div>
