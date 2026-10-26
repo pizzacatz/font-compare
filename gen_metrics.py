@@ -5,7 +5,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'pokemon-custom
 from fontTools.ttLib import TTFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 VARIANTS = {'normal': '', 'narrow': 'Narrow', 'small': 'Small', 'short': 'Short', 'small_narrow': 'SmallNarrow',
-            'narrower': 'Narrower', 'small_narrower': 'SmallNarrower', 'short_narrow': 'ShortNarrow', 'short_narrower': 'ShortNarrower'}
+            'narrower': 'Narrower', 'small_narrower': 'SmallNarrower', 'short_narrow': 'ShortNarrow', 'short_narrower': 'ShortNarrower',
+            'header': 'Header', 'badge': 'Badge'}
 FONTS = {}
 for v, f in VARIANTS.items():
     FONTS[v] = {'vector': f'EmeraldPixelVector{f}-Regular.ttf', 'game': f'EmeraldRounded{f}Game-Regular.ttf'}

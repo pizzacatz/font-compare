@@ -22,7 +22,8 @@ described in its README; the comparison sheet works without it.
 ## The comparison sheet (`/`)
 
 - **Font** picks one of the game's Latin fonts: Normal, Narrow, Small, Short, Small Narrow, and
-  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower. Normal compares all four
+  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower, and the lettering drawn into
+  the game's art (summary-screen headers, type badges). Normal compares all four
   treatments; the others compare their Pixel Vector and Rounded Game (Pixel Soft and Rounded are Normal-only).
 - **Overlay**: all enabled fonts drawn on top of each other with multiply blending (screen in dark
   mode). Matching outlines read as one dark shape; differences split into the layer colours. The sheet
@@ -49,8 +50,9 @@ circles, dots (round, square, rounded square), solid fill polygons, join styles,
 number is editable in the side panel, and the stroked result is previewed live and overlaid on the
 pixel original.
 
-- The *Font* menu picks one of the game's Latin fonts: Normal, Narrow, Small, Short, Small Narrow, and
-  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower.
+- The *Font* menu picks one of the game's Latin fonts: Normal, Narrow, Small, Short, Small Narrow,
+  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower, or the lettering drawn into the
+  game's art (summary-screen headers, type badges).
   Each has its own overrides, pixel grid and guides (cap top, x-height, baseline); the choice is
   remembered, and `editor.html?font=small&ch=a` opens a font and glyph directly.
 - Open any glyph by typing it, by code point (`U+E053`), or from the "All glyphs" picker that lists
