@@ -93,7 +93,7 @@ function extendCaps(b) {
   return b;
 }
 function normDot(d) { return Array.isArray(d) ? { x: d[0], y: d[1], r: d[2] ?? 0.5, ...(d[3] ? { shape: d[3] } : {}), ...(d[4] != null ? { corner: d[4] } : {}) } : d; }
-function dotPath(d) { const p = new Path2D(); const r = d.r ?? 0.5, shape = d.shape ?? spec.dot_shape ?? 'circle', cr = shape === 'square' ? 0 : Math.min(d.corner ?? spec.dot_corner ?? 0.25, r);
+function dotPath(d) { const p = new Path2D(); const r = d.r ?? 0.5, shape = d.shape ?? spec.dot_shape ?? 'square', cr = shape === 'square' ? 0 : Math.min(d.corner ?? spec.dot_corner ?? 0.25, r);
   if (shape === 'circle') p.arc(d.x * S, d.y * S, r * S, 0, 7); else p.roundRect((d.x - r) * S, (d.y - r) * S, 2 * r * S, 2 * r * S, cr * S); return p; }
 function cutPolys() {
   const out = (spec.strokes || []).filter((st) => st.cut && st.cut.length >= 3).map((st) => st.cut);
@@ -217,7 +217,7 @@ function strokeJson(P, st) {
   const lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = `Stroke ${sel.s + 1} as JSON`;
   box.append(lbl, ta, b); P.appendChild(box);
 }
-function fillGlyphFields() { $('fname').value = name; $('chars').value = (Array.isArray(spec.char) ? spec.char : [spec.char]).join(','); $('r0').value = spec.rows?.[0] ?? 0; $('r1').value = spec.rows?.[1] ?? 16; $('gw').value = spec.width ?? 1; $('gr').value = spec.joint_radius ?? 0; $('gj').value = spec.join ?? 'miter'; $('gds').value = spec.dot_shape ?? 'circle'; $('gdc').value = spec.dot_corner ?? 0.25; spec.dots = (spec.dots || []).map(normDot); $('cy0').value = spec.clip_y?.[0] ?? ''; $('cy1').value = spec.clip_y?.[1] ?? ''; $('cx0').value = spec.clip_x?.[0] ?? ''; $('cx1').value = spec.clip_x?.[1] ?? ''; }
+function fillGlyphFields() { $('fname').value = name; $('chars').value = (Array.isArray(spec.char) ? spec.char : [spec.char]).join(','); $('r0').value = spec.rows?.[0] ?? 0; $('r1').value = spec.rows?.[1] ?? 16; $('gw').value = spec.width ?? 1; $('gr').value = spec.joint_radius ?? 0; $('gj').value = spec.join ?? 'miter'; $('gds').value = spec.dot_shape ?? 'square'; $('gdc').value = spec.dot_corner ?? 0.25; spec.dots = (spec.dots || []).map(normDot); $('cy0').value = spec.clip_y?.[0] ?? ''; $('cy1').value = spec.clip_y?.[1] ?? ''; $('cx0').value = spec.clip_x?.[0] ?? ''; $('cx1').value = spec.clip_x?.[1] ?? ''; }
 function readGlyphFields() { name = $('fname').value.trim(); const raw = $('chars').value; let cs = raw.split(',').map((s) => s.trim()).filter(Boolean); if (!cs.length && raw.includes(',')) cs = [',']; spec.char = cs.length === 1 ? cs[0] : cs; spec.rows = [+$('r0').value, +$('r1').value]; spec.width = +$('gw').value; spec.joint_radius = +$('gr').value; spec.join = $('gj').value; spec.dot_shape = $('gds').value; spec.dot_corner = +$('gdc').value; if ($('cy0').value !== '' && $('cy1').value !== '') spec.clip_y = [+$('cy0').value, +$('cy1').value]; else delete spec.clip_y; if ($('cx0').value !== '' && $('cx1').value !== '') spec.clip_x = [+$('cx0').value, +$('cx1').value]; else delete spec.clip_x; }
 for (const id of ['chars', 'r0', 'r1', 'gw', 'gr', 'gj', 'gds', 'gdc', 'cy0', 'cy1', 'cx0', 'cx1', 'fname']) $(id).onchange = () => { readGlyphFields(); draw(); };
 
