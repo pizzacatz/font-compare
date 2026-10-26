@@ -21,6 +21,9 @@ described in its README; the comparison sheet works without it.
 
 ## The comparison sheet (`/`)
 
+- **Font** picks one of the game's Latin fonts: Normal, Narrow, Small, Short, Small Narrow, and
+  pokeemerald-expansion's Narrower, Small Narrower, Short Narrow, Short Narrower. Normal compares all four
+  treatments; the others compare their Pixel Vector and Rounded Game (Pixel Soft and Rounded are Normal-only).
 - **Overlay**: all enabled fonts drawn on top of each other with multiply blending (screen in dark
   mode). Matching outlines read as one dark shape; differences split into the layer colours. The sheet
   is an editable text area, so type anything.

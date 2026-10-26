@@ -131,7 +131,7 @@ function draw() {
   if (showFill) {
     const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d');
     o.strokeStyle = css('--game'); o.fillStyle = css('--game'); o.lineCap = 'butt';
-    spec.strokes.forEach((st) => { if (st.cut) return; const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'round'; o.miterLimit = 8; o.stroke(pathOf(b)); });
+    spec.strokes.forEach((st) => { if (st.cut) return; const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'round'; o.miterLimit = 4; o.stroke(pathOf(b)); });
     for (const d of (spec.dots || [])) o.fill(dotPath(d));
     o.globalCompositeOperation = 'destination-out';
     for (const poly of cutPolys()) o.fill(polyPath(poly));

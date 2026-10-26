@@ -11,12 +11,25 @@
   <header class="top">
     <div>
       <h1><span class="f-vector">Pixel Vector</span><span class="vs">vs</span><span class="f-soft">Pixel Soft</span><span class="vs">vs</span><span class="f-round">Rounded</span><span class="vs">vs</span><span class="f-game">Rounded Game</span></h1>
-      <p class="lede">The fonts are drawn on top of each other. Where the outlines match you see one shape. Where they differ, the edges split into <b class="c-vector">Pixel Vector</b>, <b class="c-soft">Pixel Soft</b>, <b class="c-round">Rounded</b> and <b class="c-game">Rounded Game</b> (same outlines as Rounded, game spacing).</p>
+      <p class="lede">The fonts are drawn on top of each other. Where the outlines match you see one shape. Where they differ, the edges split into <b class="c-vector">Pixel Vector</b>, <b class="c-soft">Pixel Soft</b>, <b class="c-round">Rounded</b> and <b class="c-game">Rounded Game</b> (same outlines as Rounded, game spacing). Pick one of the game's other fonts under <b>Font</b> to compare its Pixel Vector and Rounded Game; Pixel Soft and Rounded exist only for Normal.</p>
     </div>
     <div class="legend" id="legend" role="group" aria-label="Fonts shown"></div>
   </header>
 
   <div class="toolbar">
+    <div class="field">
+      <label class="lbl" for="font">Font</label>
+      <select id="font">
+        <optgroup label="Pokémon Emerald">
+          <option value="normal">Normal</option><option value="narrow">Narrow</option><option value="small">Small</option>
+          <option value="short">Short</option><option value="small_narrow">Small Narrow</option>
+        </optgroup>
+        <optgroup label="pokeemerald-expansion">
+          <option value="narrower">Narrower</option><option value="small_narrower">Small Narrower</option>
+          <option value="short_narrow">Short Narrow</option><option value="short_narrower">Short Narrower</option>
+        </optgroup>
+      </select>
+    </div>
     <div class="field">
       <span class="lbl">View</span>
       <div class="seg" role="group">
@@ -105,7 +118,7 @@
       <aside class="sheet loupe" aria-label="Selected glyph">
         <canvas id="loupe" width="340" height="340"></canvas>
         <div class="lp-meta"><span class="lp-cp" id="lp-cp"></span><span class="lp-score" id="lp-score"></span></div>
-        <p class="lp-key">Dashed lines: cap height (9 px) and x-height (6 px). Solid: baseline. Grey verticals: the glyph's advance in each font. The faint grid is the 16 px source pixel cell.</p>
+        <p class="lp-key">Dashed lines: cap height and x-height. Solid: baseline. Grey verticals: the glyph's advance in each font. The faint grid is the 16 px source pixel cell.</p>
       </aside>
     </div>
   </section>
@@ -115,10 +128,10 @@
       <div><h2 id="m-h">Metrics</h2><p>Read from the font files with fontTools (1600 units per em, 100 units per source pixel).</p></div>
     </div>
     <div class="sheet tbl-wrap"><table>
-      <thead><tr><th scope="col">Measure</th><th scope="col"><span class="sw vector"></span>Pixel Vector</th><th scope="col"><span class="sw soft"></span>Pixel Soft</th><th scope="col"><span class="sw round"></span>Rounded</th><th scope="col"><span class="sw game"></span>Rounded Game</th></tr></thead>
+      <thead><tr id="metrics-head"></tr></thead>
       <tbody id="metrics"></tbody>
     </table></div>
-    <p class="metrics-note">All four share the same vertical metrics, so lines align exactly when stacked. The Rounded font adds 100 units (1 px) to every advance and shifts outlines right by half a pixel, which is why it runs wider in the overlay. Rounded Game uses the same outlines with the game advances, so it overlays the pixel fonts without any correction.</p>
+    <p class="metrics-note">The fonts of one game font share the same vertical metrics, so lines align exactly when stacked. The Rounded font adds 100 units (1 px) to every advance and shifts outlines right by half a pixel, which is why it runs wider in the overlay. Rounded Game uses the same outlines with the game advances, so it overlays the pixel fonts without any correction.</p>
   </section>
 
   <footer><a href="editor.html">Open the glyph editor</a> (needs <code>python3 edit_server.py</code>). Fonts from <code>../pokemon-custom-emerald-font/build/fonts</code>. Run <code>./sync-fonts.sh</code> after rebuilding them, <code>./serve.sh</code> to open the app at http://localhost:8766. Samples live in <code>samples.json</code>.</footer>
