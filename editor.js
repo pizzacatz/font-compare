@@ -131,7 +131,7 @@ function draw() {
   if (showFill) {
     const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d');
     o.strokeStyle = css('--game'); o.fillStyle = css('--game'); o.lineCap = 'butt';
-    spec.strokes.forEach((st) => { if (st.cut) return; const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'round'; o.miterLimit = 4; o.stroke(pathOf(b)); });
+    spec.strokes.forEach((st) => { if (st.cut) return; if (st.fill) { if (st.fill.length >= 3) o.fill(polyPath(st.fill)); return; } const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'round'; o.miterLimit = 4; o.stroke(pathOf(b)); });
     for (const d of (spec.dots || [])) o.fill(dotPath(d));
     o.globalCompositeOperation = 'destination-out';
     for (const poly of cutPolys()) o.fill(polyPath(poly));
@@ -140,19 +140,21 @@ function draw() {
   // cut masks: red hatch
   for (const poly of cutPolys()) { const p = polyPath(poly); ctx.fillStyle = 'rgba(220,40,40,0.12)'; ctx.fill(p); ctx.strokeStyle = 'rgba(220,40,40,0.8)'; ctx.setLineDash([5, 3]); ctx.lineWidth = 1.5; ctx.stroke(p); ctx.setLineDash([]); }
   // centrelines + handles
-  spec.strokes.forEach((st, i) => { if (!st.cut) { const b = strokeBeziers(st); ctx.lineWidth = i === sel.s ? 3 : 1.5; ctx.strokeStyle = i === sel.s ? css('--ink') : css('--round'); ctx.stroke(pathOf(b)); }
+  spec.strokes.forEach((st, i) => { if (st.fill) { const p = polyPath(st.fill); ctx.lineWidth = i === sel.s ? 3 : 1.5; ctx.strokeStyle = i === sel.s ? css('--ink') : css('--round'); ctx.stroke(p); } else if (!st.cut) { const b = strokeBeziers(st); ctx.lineWidth = i === sel.s ? 3 : 1.5; ctx.strokeStyle = i === sel.s ? css('--ink') : css('--round'); ctx.stroke(pathOf(b)); }
     for (const [j, p] of handles(st).entries()) { ctx.beginPath(); ctx.arc(p[0] * S, p[1] * S, i === sel.s && j === sel.p ? 7 : 5, 0, 7); ctx.fillStyle = i === sel.s && j === sel.p ? css('--ink') : css('--sheet'); ctx.fill(); ctx.strokeStyle = css('--ink'); ctx.lineWidth = 1.5; ctx.stroke(); } });
   (spec.dots || []).forEach((d, j) => { ctx.beginPath(); ctx.arc(d.x * S, d.y * S, sel.s === -2 && sel.p === j ? 7 : 5, 0, 7); ctx.fillStyle = sel.s === -2 && sel.p === j ? css('--ink') : css('--sheet'); ctx.fill(); ctx.strokeStyle = css('--ink'); ctx.stroke(); });
   if (draft) { ctx.strokeStyle = css('--ink'); ctx.setLineDash([4, 4]); ctx.beginPath(); draft.forEach((p, i) => i ? ctx.lineTo(p[0] * S, p[1] * S) : ctx.moveTo(p[0] * S, p[1] * S)); ctx.stroke(); ctx.setLineDash([]); }
 }
 function handles(st) {
   if (st.cut) return st.cut;
+  if (st.fill) return st.fill;
   if (st.arc) { const a = st.arc, e = (t) => [a.center[0] + a.radius * Math.cos(t * Math.PI / 180), a.center[1] - a.radius * Math.sin(t * Math.PI / 180)]; return [a.center, e(a.start), e(a.end)]; }
   if (st.circle) return [st.circle.center, [st.circle.center[0] + st.circle.radius, st.circle.center[1]]];
   return st.points;
 }
 function setHandle(st, j, x, y) {
   if (st.cut) { st.cut[j] = [x, y]; return; }
+  if (st.fill) { st.fill[j] = [x, y]; return; }
   if (st.arc) { const a = st.arc; if (j === 0) a.center = [x, y]; else { const ang = Math.atan2(a.center[1] - y, x - a.center[0]) * 180 / Math.PI; if (j === 1) { a.start = Math.round(ang * 10) / 10; a.radius = Math.round(Math.hypot(x - a.center[0], y - a.center[1]) * 100) / 100; } else a.end = Math.round(ang * 10) / 10; } return; }
   if (st.circle) { if (j === 0) st.circle.center = [x, y]; else st.circle.radius = Math.round(Math.hypot(x - st.circle.center[0], y - st.circle.center[1]) * 100) / 100; return; }
   const old = st.points[j]; st.points[j] = old.length > 3 ? [x, y, old[2] ?? null, old[3]] : (old.length > 2 ? [x, y, old[2]] : [x, y]);
@@ -161,7 +163,7 @@ function setHandle(st, j, x, y) {
 /* ---------- UI ---------- */
 function renderList() {
   const L = $('list'); L.replaceChildren(...spec.strokes.map((st, i) => { const b = document.createElement('button'); b.type = 'button';
-    b.textContent = `${i + 1}. ` + (st.cut ? `cut mask ${st.cut.length} pts` : st.arc ? `arc r=${st.arc.radius} ${st.arc.start}°→${st.arc.end}°` : st.circle ? `circle r=${st.circle.radius}` : `polyline ${st.points.length} pts${st.points.some((p) => p[3]) ? ' +arcs' : ''}${st.closed ? ' closed' : ''}${st.sharp ? ' sharp' : ''}`) + (st.width ? ` w=${st.width}` : '');
+    b.textContent = `${i + 1}. ` + (st.cut ? `cut mask ${st.cut.length} pts` : st.fill ? `fill ${st.fill.length} pts` : st.arc ? `arc r=${st.arc.radius} ${st.arc.start}°→${st.arc.end}°` : st.circle ? `circle r=${st.circle.radius}` : `polyline ${st.points.length} pts${st.points.some((p) => p[3]) ? ' +arcs' : ''}${st.closed ? ' closed' : ''}${st.sharp ? ' sharp' : ''}`) + (st.width ? ` w=${st.width}` : '');
     b.setAttribute('aria-pressed', String(i === sel.s)); b.onclick = () => { sel = { s: i, p: -1 }; renderList(); draw(); }; return b; }));
   const P = $('sprops'); P.innerHTML = '';
   if (sel.s === -2 && spec.dots?.[sel.p]) { const d = spec.dots[sel.p];
@@ -176,6 +178,7 @@ function renderList() {
   const st = spec.strokes[sel.s];
   strokeJson(P, st);
   if (st.cut) { const l = document.createElement('div'); l.className = 'hint'; l.textContent = 'Cut mask: drag corners; Delete removes the selected corner (or the mask when no corner is selected).'; P.appendChild(l); return; }
+  if (st.fill) { const l = document.createElement('div'); l.className = 'hint'; l.textContent = 'Fill: a solid polygon (no stroke width). Drag corners; Delete removes the selected corner (or the fill when no corner is selected).'; P.appendChild(l); return; }
   const add = (label, html) => { const l = document.createElement('label'); l.innerHTML = `<span>${label}</span>${html}`; P.appendChild(l); return l.lastElementChild; };
   add('Stroke width (blank = glyph)', `<input type="number" step="0.05" min="0.3" value="${st.width ?? ''}">`).onchange = (e) => { if (e.target.value === '') delete st.width; else st.width = +e.target.value; renderList(); draw(); };
   add('Join (blank = glyph)', `<select><option value="">default</option><option value="round" ${st.join === 'round' ? 'selected' : ''}>round</option><option value="miter" ${st.join === 'miter' ? 'selected' : ''}>miter</option><option value="bevel" ${st.join === 'bevel' ? 'selected' : ''}>bevel</option></select>`).onchange = (e) => { if (e.target.value === '') delete st.join; else st.join = e.target.value; draw(); };
@@ -262,7 +265,7 @@ cv.addEventListener('pointerdown', (e) => {
     (spec.dots || []).forEach((p, j) => { const d = Math.hypot(p.x - rx, p.y - ry); if (d < 0.35 && (!best || d < best.d)) best = { d, s: -2, p: j }; });
     if (best) { sel = { s: best.s, p: best.p }; drag = best; cv.setPointerCapture(e.pointerId); } else sel = { s: -1, p: -1 };
     renderList(); draw(); return; }
-  if (tool === 'poly' || tool === 'cut') { draft = draft || []; draft.push([x, y]); draw(); return; }
+  if (tool === 'poly' || tool === 'cut' || tool === 'fill') { draft = draft || []; draft.push([x, y]); draw(); return; }
   if (tool === 'dot') { (spec.dots ||= []).push({ x, y, r: 0.5 }); sel = { s: -2, p: spec.dots.length - 1 }; renderList(); draw(); return; }
   if (tool === 'arc' || tool === 'circle') { draft = draft || []; draft.push([x, y]);
     if (tool === 'circle' && draft.length === 2) { spec.strokes.push({ circle: { center: draft[0], radius: Math.round(Math.hypot(draft[1][0] - draft[0][0], draft[1][1] - draft[0][1]) * 100) / 100 } }); draft = null; sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); }
@@ -274,10 +277,10 @@ cv.addEventListener('pointermove', (e) => { if (!drag) return; const [x, y] = to
 cv.addEventListener('pointerup', () => { if (drag) { drag = null; renderList(); } });
 cv.addEventListener('dblclick', () => finishDraft());
 function finishDraft() { if (tool === 'poly' && draft && draft.length >= 2) { spec.strokes.push({ points: draft }); sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); }
-  if (tool === 'cut' && draft && draft.length >= 3) { spec.strokes.push({ cut: draft }); sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); } draft = null; draw(); }
+  if ((tool === 'cut' || tool === 'fill') && draft && draft.length >= 3) { spec.strokes.push({ [tool]: draft }); sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); } draft = null; draw(); }
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return;
   if (e.key === 'Enter') finishDraft(); if (e.key === 'Escape') { draft = null; draw(); }
-  if (e.key === 'Delete' || e.key === 'Backspace') { if (sel.s === -2) { spec.dots.splice(sel.p, 1); } else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].cut?.length > 3) spec.strokes[sel.s].cut.splice(sel.p, 1); else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].points?.length > 2) spec.strokes[sel.s].points.splice(sel.p, 1); else if (sel.s >= 0 && sel.p < 0) spec.strokes.splice(sel.s, 1); sel = { s: -1, p: -1 }; renderList(); draw(); } });
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (sel.s === -2) { spec.dots.splice(sel.p, 1); } else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].cut?.length > 3) spec.strokes[sel.s].cut.splice(sel.p, 1); else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].fill?.length > 3) spec.strokes[sel.s].fill.splice(sel.p, 1); else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].points?.length > 2) spec.strokes[sel.s].points.splice(sel.p, 1); else if (sel.s >= 0 && sel.p < 0) spec.strokes.splice(sel.s, 1); sel = { s: -1, p: -1 }; renderList(); draw(); } });
 
 for (const b of document.querySelectorAll('#tools button')) b.onclick = () => { tool = b.dataset.tool; draft = null; for (const o of document.querySelectorAll('#tools button')) o.setAttribute('aria-pressed', String(o === b)); draw(); };
 for (const b of document.querySelectorAll('#snaps button')) b.onclick = () => { snap = +b.dataset.snap; for (const o of document.querySelectorAll('#snaps button')) o.setAttribute('aria-pressed', String(o === b)); };

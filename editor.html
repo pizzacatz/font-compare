@@ -37,7 +37,8 @@
     <button type="button" data-tool="arc">Arc</button>
     <button type="button" data-tool="circle">Circle</button>
     <button type="button" data-tool="dot">Dot</button>
-    <button type="button" data-tool="cut">Cut mask</button></div></div>
+    <button type="button" data-tool="cut">Cut mask</button>
+    <button type="button" data-tool="fill">Fill</button></div></div>
   <div class="field"><span class="lbl">Snap</span><div class="seg" id="snaps">
     <button type="button" data-snap="0.5" aria-pressed="true">½ px</button><button type="button" data-snap="0.25">¼ px</button><button type="button" data-snap="0.1">0.1</button><button type="button" data-snap="0">off</button></div></div>
   <div class="field"><span class="lbl">Show</span><div class="row">
@@ -46,7 +47,7 @@
 
 <div class="ed">
   <div><canvas id="cv" width="768" height="768"></canvas>
-    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Any selected stroke can also be edited as raw JSON under its properties.</p>
+    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Fill: click polygon corners, Enter finishes; the polygon is solid ink with no stroke width (the arrows are drawn this way). Any selected stroke can also be edited as raw JSON under its properties.</p>
     <div class="renders"><span class="r-vector" id="rv"></span><span class="r-game" id="rg"></span><span class="hint">← actual TTFs (Pixel Vector / Rounded Game as currently built)</span></div>
   </div>
   <aside class="sheet panel">
