@@ -77,7 +77,7 @@ function arcBeziers(cx, cy, r, a0, a1, steps) {
   return out;
 }
 function strokeBeziers(st) {
-  const w = st.width ?? spec.width ?? 1, defR = st.sharp ? 0 : (st.joint_radius ?? spec.joint_radius ?? 1);
+  const w = st.width ?? spec.width ?? 1, defR = st.sharp ? 0 : (st.joint_radius ?? spec.joint_radius ?? 0);   // sharp unless a model rounds it
   if (st.arc) return { closed: false, w, segs: arcBeziers(st.arc.center[0], st.arc.center[1], st.arc.radius, st.arc.start, st.arc.end) };
   if (st.circle) return { closed: true, w, segs: arcBeziers(st.circle.center[0], st.circle.center[1], st.circle.radius, 0, 360, 4) };
   const pts = st.sharp ? st.points.map((p) => [p[0], p[1], 0, p[3] ?? 0]) : st.points;
@@ -133,7 +133,7 @@ function draw() {
   if (showFill) {
     const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d');
     o.strokeStyle = css('--game'); o.fillStyle = css('--game'); o.lineCap = 'butt';
-    spec.strokes.forEach((st) => { if (st.cut) return; if (st.fill) { if (st.fill.length >= 3) o.fill(polyPath(st.fill)); return; } const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'round'; o.miterLimit = 4; o.stroke(pathOf(b)); });
+    spec.strokes.forEach((st) => { if (st.cut) return; if (st.fill) { if (st.fill.length >= 3) o.fill(polyPath(st.fill)); return; } const b = extendCaps(strokeBeziers(st)); o.lineWidth = b.w * S; o.lineJoin = st.join ?? spec.join ?? 'miter'; o.miterLimit = 4; o.stroke(pathOf(b)); });
     for (const d of (spec.dots || [])) o.fill(dotPath(d));
     o.globalCompositeOperation = 'destination-out';
     for (const poly of cutPolys()) o.fill(polyPath(poly));
@@ -217,7 +217,7 @@ function strokeJson(P, st) {
   const lbl = document.createElement('span'); lbl.className = 'lbl'; lbl.textContent = `Stroke ${sel.s + 1} as JSON`;
   box.append(lbl, ta, b); P.appendChild(box);
 }
-function fillGlyphFields() { $('fname').value = name; $('chars').value = (Array.isArray(spec.char) ? spec.char : [spec.char]).join(','); $('r0').value = spec.rows?.[0] ?? 0; $('r1').value = spec.rows?.[1] ?? 16; $('gw').value = spec.width ?? 1; $('gr').value = spec.joint_radius ?? 1; $('gj').value = spec.join ?? 'round'; $('gds').value = spec.dot_shape ?? 'circle'; $('gdc').value = spec.dot_corner ?? 0.25; spec.dots = (spec.dots || []).map(normDot); $('cy0').value = spec.clip_y?.[0] ?? ''; $('cy1').value = spec.clip_y?.[1] ?? ''; $('cx0').value = spec.clip_x?.[0] ?? ''; $('cx1').value = spec.clip_x?.[1] ?? ''; }
+function fillGlyphFields() { $('fname').value = name; $('chars').value = (Array.isArray(spec.char) ? spec.char : [spec.char]).join(','); $('r0').value = spec.rows?.[0] ?? 0; $('r1').value = spec.rows?.[1] ?? 16; $('gw').value = spec.width ?? 1; $('gr').value = spec.joint_radius ?? 0; $('gj').value = spec.join ?? 'miter'; $('gds').value = spec.dot_shape ?? 'circle'; $('gdc').value = spec.dot_corner ?? 0.25; spec.dots = (spec.dots || []).map(normDot); $('cy0').value = spec.clip_y?.[0] ?? ''; $('cy1').value = spec.clip_y?.[1] ?? ''; $('cx0').value = spec.clip_x?.[0] ?? ''; $('cx1').value = spec.clip_x?.[1] ?? ''; }
 function readGlyphFields() { name = $('fname').value.trim(); const raw = $('chars').value; let cs = raw.split(',').map((s) => s.trim()).filter(Boolean); if (!cs.length && raw.includes(',')) cs = [',']; spec.char = cs.length === 1 ? cs[0] : cs; spec.rows = [+$('r0').value, +$('r1').value]; spec.width = +$('gw').value; spec.joint_radius = +$('gr').value; spec.join = $('gj').value; spec.dot_shape = $('gds').value; spec.dot_corner = +$('gdc').value; if ($('cy0').value !== '' && $('cy1').value !== '') spec.clip_y = [+$('cy0').value, +$('cy1').value]; else delete spec.clip_y; if ($('cx0').value !== '' && $('cx1').value !== '') spec.clip_x = [+$('cx0').value, +$('cx1').value]; else delete spec.clip_x; }
 for (const id of ['chars', 'r0', 'r1', 'gw', 'gr', 'gj', 'gds', 'gdc', 'cy0', 'cy1', 'cx0', 'cx1', 'fname']) $(id).onchange = () => { readGlyphFields(); draw(); };
 
@@ -242,7 +242,7 @@ async function load(ch) {
   const ov = await (await fetch(`/api/overrides?variant=${variant}`)).json();
   const hit = Object.entries(ov).find(([n, s]) => (Array.isArray(s.char) ? s.char : [s.char]).includes(ch));
   if (hit) { [name, spec] = [hit[0], hit[1]]; log(`Loaded ${VARIANTS[variant].label} override ${name}.json` + (spec._ported ? ` (${spec._ported})` : '')); }
-  else { name = `u${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`; spec = { char: ch, rows: [0, 16], width: 1.0, joint_radius: 1.0, strokes: [], dots: [] }; log(`No override yet for "${ch}": starting empty (auto trace shown dashed). Use "Seed from auto trace" or draw.`); }
+  else { name = `u${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`; spec = { char: ch, rows: [0, 16], width: 1.0, joint_radius: 0, join: 'miter', strokes: [], dots: [] }; log(`No override yet for "${ch}": starting empty (auto trace shown dashed). Use "Seed from auto trace" or draw.`); }
   $('rv').textContent = ch; $('rg').textContent = ch;
   $('report').hidden = variant === 'normal';
   sel = { s: -1, p: -1 }; fillGlyphFields(); renderList(); draw();

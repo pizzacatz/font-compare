@@ -45,7 +45,7 @@ described in its README; the comparison sheet works without it.
 ![Glyph editor](editor_dark.png)
 
 Draws a glyph on the source pixel grid with the original bitmap behind it and lets you define it
-mathematically: polylines with per-joint radii, circular arcs by bulge or by centre and angles,
+mathematically: polylines with per-joint radii (sharp, mitred joints by default), circular arcs by bulge or by centre and angles,
 circles, dots (round, square, rounded square), solid fill polygons, join styles, cut masks and row/column clips. Every
 number is editable in the side panel, and the stroked result is previewed live and overlaid on the
 pixel original.

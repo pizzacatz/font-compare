@@ -50,7 +50,7 @@
 
 <div class="ed">
   <div><canvas id="cv" width="768" height="768"></canvas>
-    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius, Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming round joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Fill: click polygon corners, Enter finishes; the polygon is solid ink with no stroke width (the arrows are drawn this way). Any selected stroke can also be edited as raw JSON under its properties.</p>
+    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius (joints are sharp and mitred unless given a radius or a round join), Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Fill: click polygon corners, Enter finishes; the polygon is solid ink with no stroke width (the arrows are drawn this way). Any selected stroke can also be edited as raw JSON under its properties.</p>
     <div class="renders"><span class="r-vector" id="rv"></span><span class="r-game" id="rg"></span><span class="hint">← actual TTFs (Pixel Vector / Rounded Game as currently built)</span></div>
   </div>
   <aside class="sheet panel">
@@ -62,7 +62,7 @@
     <label>Default joint radius <input type="number" id="gr" step="0.1" min="0" max="4"></label>
     <label>Dot shape <select id="gds"><option value="circle">circle</option><option value="square">square</option><option value="rounded">rounded square</option></select></label>
     <label>Dot corner radius (px) <input type="number" id="gdc" step="0.05" min="0" max="2"></label>
-    <label>Default join <select id="gj"><option value="round">round</option><option value="miter">miter (sharp)</option><option value="bevel">bevel (flat)</option></select></label>
+    <label>Default join <select id="gj"><option value="miter">miter (sharp, default)</option><option value="round">round</option><option value="bevel">bevel (flat)</option></select></label>
     <label>Clip to rows y <span><input type="number" id="cy0" step="0.25" style="width:60px" placeholder="min"> – <input type="number" id="cy1" step="0.25" style="width:60px" placeholder="max"></span></label>
     <label>Clip to columns x <span><input type="number" id="cx0" step="0.25" style="width:60px" placeholder="min"> – <input type="number" id="cx1" step="0.25" style="width:60px" placeholder="max"></span></label>
     <h3>Strokes</h3>
