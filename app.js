@@ -8,6 +8,7 @@ const VARIANTS = {
   narrower: { label: 'Narrower', file: 'Narrower' }, small_narrower: { label: 'Small Narrower', file: 'SmallNarrower' },
   short_narrow: { label: 'Short Narrow', file: 'ShortNarrow' }, short_narrower: { label: 'Short Narrower', file: 'ShortNarrower' },
   header: { label: 'Header', file: 'Header' }, badge: { label: 'Badge', file: 'Badge' },
+  status: { label: 'Status', file: 'Status' },
 };
 const FAM0 = { vector: 'Cmp Vector', soft: 'Cmp Soft', round: 'Cmp Round', game: 'Cmp Game' };
 const FAM = { ...FAM0 };   // CSS family of each layer for the current font (Normal's are declared in style.css)

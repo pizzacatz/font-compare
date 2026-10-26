@@ -14,7 +14,7 @@ usage: python3 edit_server.py [port]   (default 8768)
 import http.server, json, os, sys, subprocess, urllib.parse, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 FP = os.path.abspath(os.path.join(HERE, '..', 'pokemon-custom-emerald-font'))
-VARIANTS = ('normal', 'narrow', 'small', 'short', 'small_narrow', 'narrower', 'small_narrower', 'short_narrow', 'short_narrower', 'header', 'badge')
+VARIANTS = ('normal', 'narrow', 'small', 'short', 'small_narrow', 'narrower', 'small_narrower', 'short_narrow', 'short_narrower', 'header', 'badge', 'status')
 
 def data_dir(variant):
     return os.path.join(FP, 'data') if variant == 'normal' else os.path.join(FP, 'data', variant)

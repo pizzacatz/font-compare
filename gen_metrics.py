@@ -6,7 +6,7 @@ from fontTools.ttLib import TTFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 VARIANTS = {'normal': '', 'narrow': 'Narrow', 'small': 'Small', 'short': 'Short', 'small_narrow': 'SmallNarrow',
             'narrower': 'Narrower', 'small_narrower': 'SmallNarrower', 'short_narrow': 'ShortNarrow', 'short_narrower': 'ShortNarrower',
-            'header': 'Header', 'badge': 'Badge'}
+            'header': 'Header', 'badge': 'Badge', 'status': 'Status'}
 FONTS = {}
 for v, f in VARIANTS.items():
     FONTS[v] = {'vector': f'EmeraldPixelVector{f}-Regular.ttf', 'game': f'EmeraldRounded{f}Game-Regular.ttf'}

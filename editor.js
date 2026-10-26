@@ -12,8 +12,9 @@ const VARIANTS = {
   small_narrow: { label: 'Small Narrow', base: 11, file: 'SmallNarrow' },
   narrower: { label: 'Narrower', base: 12, file: 'Narrower' }, small_narrower: { label: 'Small Narrower', base: 11, file: 'SmallNarrower' },
   short_narrow: { label: 'Short Narrow', base: 11, file: 'ShortNarrow' }, short_narrower: { label: 'Short Narrower', base: 11, file: 'ShortNarrower' },
-  // lettering baked into the game's art: the summary screen's section headers and the type badges
+  // lettering baked into the game's art: the summary screen's section headers, the type badges and the status pills
   header: { label: 'Header', base: 11, file: 'Header' }, badge: { label: 'Badge', base: 11, file: 'Badge' },
+  status: { label: 'Status', base: 11, file: 'Status' },
 };
 let variant = 'normal', guides = [3, 6, 12];
 try { const v = localStorage.getItem('efc:editor-variant'); if (v in VARIANTS) variant = v; } catch {}
