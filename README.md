@@ -59,6 +59,10 @@ pixel original.
   the game symbols too. A glyph ported from Normal shows how it was ported in the log.
 - Click a stroke in the list to edit it on its own: drag its points, set radii, bulges and angles in
   the panel, or edit the whole stroke as raw JSON in the box under its properties (*Apply stroke JSON*).
+- The *Curve preset* (67.5° by default, *negative* to bend the other way) is remembered across glyphs,
+  fonts and reloads. The *Curve* tool bends the segment you click by it (Shift-click: the other way); with
+  a point selected, *Apply* / *Flip* / *Straight* or the keys C (Shift+C), F and X do the same to the
+  segment from that point to the next.
 - *Seed from auto trace* starts from the generated model; *Save* writes
   `data/glyph_overrides/<name>.json` (Normal) or `data/<font>/glyph_overrides/<name>.json` in the font
   project and marks a ported glyph as hand-edited so re-porting never replaces it; *Rebuild*

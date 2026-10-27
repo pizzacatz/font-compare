@@ -199,6 +199,8 @@ function renderList() {
       const seg = st.points[sel.p + 1] || (st.closed ? st.points[0] : null);
       if (seg) { const dx = seg[0] - p[0], dy = -(seg[1] - p[1]), d = Math.hypot(dx, dy); add('Segment to next: length / angle', `<span>${d.toFixed(3)} px / ${(Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1)}°</span>`);
         const bz = p[3] ?? 0; const theta = 4 * Math.atan(bz) * 180 / Math.PI; const R = bz ? d / (2 * Math.abs(Math.sin(2 * Math.atan(bz)))) : 0;
+        { const b = add(`Curve preset (${curve.neg ? '−' : ''}${curve.deg}°)`, '<span class="btns"><button type="button" class="btn">Apply</button><button type="button" class="btn">Other way</button><button type="button" class="btn">Flip</button><button type="button" class="btn">Straight</button></span>').querySelectorAll('button');
+          ['apply', 'other', 'flip', 'clear'].forEach((op, i) => { b[i].onclick = () => curveSelected(op); }); }
         add('Segment to next is an arc: bulge', `<input type="number" step="0.05" min="-3" max="3" value="${bz}" title="tan(angle/4); + bends counter-clockwise on the page">`).onchange = (e) => { const v = +e.target.value; st.points[sel.p] = [p[0], p[1], p[2] ?? null, v]; if (!v) st.points[sel.p] = p[2] != null ? [p[0], p[1], p[2]] : [p[0], p[1]]; renderList(); draw(); };
         add('…or set by included angle (°)', `<input type="number" step="1" min="-350" max="350" value="${theta.toFixed(1)}">`).onchange = (e) => { const v = Math.tan(+e.target.value * Math.PI / 180 / 4); st.points[sel.p] = [p[0], p[1], p[2] ?? null, Math.round(v * 10000) / 10000]; renderList(); draw(); };
         add('…or by radius (px, keeps bend direction)', `<input type="number" step="0.05" min="0" value="${R ? R.toFixed(3) : ''}">`).onchange = (e) => { const r = +e.target.value; if (!r || 2 * r < d) { log('Radius must be at least half the segment length (' + (d / 2).toFixed(3) + ').'); return; } const th = 2 * Math.asin(d / (2 * r)); const v = Math.tan(th / 4) * (bz < 0 ? -1 : 1); st.points[sel.p] = [p[0], p[1], p[2] ?? null, Math.round(v * 10000) / 10000]; renderList(); draw(); };
@@ -259,6 +261,39 @@ function seed() {
 }
 function log(t) { $('log').textContent = t + '\n' + $('log').textContent.slice(0, 3000); }
 
+/* ---------- curve preset: one included angle (default 67.5 degrees) for every glyph ---------- */
+let curve = { deg: 67.5, neg: false };
+try { Object.assign(curve, JSON.parse(localStorage.getItem('efc:editor-curve') || '{}')); } catch {}
+$('curveDeg').value = curve.deg; $('curveNeg').checked = curve.neg;
+function saveCurve() { curve.deg = Math.abs(+$('curveDeg').value) || 0; curve.neg = $('curveNeg').checked; try { localStorage.setItem('efc:editor-curve', JSON.stringify(curve)); } catch {} }
+$('curveDeg').onchange = saveCurve; $('curveNeg').onchange = saveCurve;
+/** The preset as a bulge, tan(angle / 4); `other` gives the opposite bend. */
+const presetBulge = (other = false) => Math.round(Math.tan(curve.deg * Math.PI / 720) * 10000) / 10000 * ((curve.neg !== other) ? -1 : 1);
+function setBulge(st, i, v) { const p = st.points[i]; st.points[i] = v ? [p[0], p[1], p[2] ?? null, v] : (p[2] != null ? [p[0], p[1], p[2]] : [p[0], p[1]]); }
+function selectedSegment() {
+  const st = spec?.strokes[sel.s]; if (!st?.points || sel.p < 0) { log('Select a point first: the curve goes on the segment from it to the next point.'); return null; }
+  if (sel.p === st.points.length - 1 && !st.closed) { log('The last point of an open stroke has no segment after it.'); return null; }
+  return st;
+}
+function curveSelected(op) {   // op: 'apply' | 'other' | 'flip' | 'clear'
+  const st = selectedSegment(); if (!st) return;
+  const bz = st.points[sel.p][3] ?? 0;
+  if (op === 'flip' && !bz) { log('That segment is straight: nothing to flip.'); return; }
+  setBulge(st, sel.p, op === 'clear' ? 0 : op === 'flip' ? -bz : presetBulge(op === 'other'));
+  renderList(); draw();
+}
+$('curveApply').onclick = (e) => curveSelected(e.shiftKey ? 'other' : 'apply');
+$('curveFlip').onclick = () => curveSelected('flip'); $('curveClear').onclick = () => curveSelected('clear');
+/** The polyline segment nearest (x, y), within 0.4 px: { s, p } with p its first point. */
+function segmentAt(x, y) {
+  let best = null;
+  spec.strokes.forEach((st, s) => { const P = st.points; if (!P) return;
+    for (let p = 0; p < (st.closed ? P.length : P.length - 1); p++) { const a = P[p], b = P[(p + 1) % P.length], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+      const t = L ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L)) : 0, d = Math.hypot(a[0] + t * dx - x, a[1] + t * dy - y);
+      if (d < 0.4 && (!best || d < best.d)) best = { d, s, p }; } });
+  return best;
+}
+
 /* ---------- mouse ---------- */
 cv.addEventListener('pointerdown', (e) => {
   if (!spec) return; const [x, y] = toPx(e), [rx, ry] = raw(e);
@@ -268,6 +303,8 @@ cv.addEventListener('pointerdown', (e) => {
     (spec.dots || []).forEach((p, j) => { const d = Math.hypot(p.x - rx, p.y - ry); if (d < 0.35 && (!best || d < best.d)) best = { d, s: -2, p: j }; });
     if (best) { sel = { s: best.s, p: best.p }; drag = best; cv.setPointerCapture(e.pointerId); } else sel = { s: -1, p: -1 };
     renderList(); draw(); return; }
+  if (tool === 'curve') { const hit = segmentAt(rx, ry); if (!hit) { log('Curve: click on a segment of a polyline.'); return; }
+    sel = { s: hit.s, p: hit.p }; curveSelected(e.shiftKey ? 'other' : 'apply'); return; }
   if (tool === 'poly' || tool === 'cut' || tool === 'fill') { draft = draft || []; draft.push([x, y]); draw(); return; }
   if (tool === 'dot') { (spec.dots ||= []).push({ x, y, r: 0.5 }); sel = { s: -2, p: spec.dots.length - 1 }; renderList(); draw(); return; }
   if (tool === 'arc' || tool === 'circle') { draft = draft || []; draft.push([x, y]);
@@ -283,6 +320,8 @@ function finishDraft() { if (tool === 'poly' && draft && draft.length >= 2) { sp
   if ((tool === 'cut' || tool === 'fill') && draft && draft.length >= 3) { spec.strokes.push({ [tool]: draft }); sel = { s: spec.strokes.length - 1, p: -1 }; renderList(); } draft = null; draw(); }
 document.addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return;
   if (e.key === 'Enter') finishDraft(); if (e.key === 'Escape') { draft = null; draw(); }
+  if (!e.ctrlKey && !e.metaKey && !e.altKey) { const k = e.key.toLowerCase();
+    if (k === 'c') curveSelected(e.shiftKey ? 'other' : 'apply'); else if (k === 'f') curveSelected('flip'); else if (k === 'x') curveSelected('clear'); }
   if (e.key === 'Delete' || e.key === 'Backspace') { if (sel.s === -2) { spec.dots.splice(sel.p, 1); } else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].cut?.length > 3) spec.strokes[sel.s].cut.splice(sel.p, 1); else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].fill?.length > 3) spec.strokes[sel.s].fill.splice(sel.p, 1); else if (sel.s >= 0 && sel.p >= 0 && spec.strokes[sel.s].points?.length > 2) spec.strokes[sel.s].points.splice(sel.p, 1); else if (sel.s >= 0 && sel.p < 0) spec.strokes.splice(sel.s, 1); sel = { s: -1, p: -1 }; renderList(); draw(); } });
 
 for (const b of document.querySelectorAll('#tools button')) b.onclick = () => { tool = b.dataset.tool; draft = null; for (const o of document.querySelectorAll('#tools button')) o.setAttribute('aria-pressed', String(o === b)); draw(); };

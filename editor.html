@@ -37,11 +37,18 @@
   <div class="field"><span class="lbl">Tool</span><div class="seg" id="tools">
     <button type="button" data-tool="select" aria-pressed="true">Select / drag</button>
     <button type="button" data-tool="poly">Polyline</button>
+    <button type="button" data-tool="curve" title="Click a segment to bend it by the curve preset; Shift-click bends it the other way">Curve</button>
     <button type="button" data-tool="arc">Arc</button>
     <button type="button" data-tool="circle">Circle</button>
     <button type="button" data-tool="dot">Dot</button>
     <button type="button" data-tool="cut">Cut mask</button>
     <button type="button" data-tool="fill">Fill</button></div></div>
+  <div class="field"><label class="lbl" for="curveDeg">Curve preset (kept for every glyph)</label><div class="row">
+    <input id="curveDeg" type="number" step="0.5" min="0" max="350" style="width:5em" title="Included angle of the arc, in degrees"><span>°</span>
+    <label class="row" style="gap:4px"><input type="checkbox" id="curveNeg">negative</label>
+    <button class="btn" id="curveApply" title="Bend the selected point's segment to the next point (key C; Shift+C the other way)">Apply</button>
+    <button class="btn" id="curveFlip" title="Reverse the selected segment's bend (key F)">Flip</button>
+    <button class="btn" id="curveClear" title="Make the selected segment straight (key X)">Straight</button></div></div>
   <div class="field"><span class="lbl">Snap</span><div class="seg" id="snaps">
     <button type="button" data-snap="0.5" aria-pressed="true">½ px</button><button type="button" data-snap="0.25">¼ px</button><button type="button" data-snap="0.1">0.1</button><button type="button" data-snap="0">off</button></div></div>
   <div class="field"><span class="lbl">Show</span><div class="row">
@@ -50,7 +57,7 @@
 
 <div class="ed">
   <div><canvas id="cv" width="768" height="768"></canvas>
-    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius (joints are sharp and mitred unless given a radius or a round join), Delete removes it. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Fill: click polygon corners, Enter finishes; the polygon is solid ink with no stroke width (the arrows are drawn this way). Any selected stroke can also be edited as raw JSON under its properties.</p>
+    <p class="hint" id="hint">Polyline: click to add points, Enter or double-click to finish, Esc cancels. Select: drag points, click a point to edit its radius (joints are sharp and mitred unless given a radius or a round join), Delete removes it. Curve: click a segment to bend it by the curve preset (Shift-click: the other way); in Select, C / Shift+C, F and X apply, flip and straighten the selected point's segment to the next point. Arc: click centre, then start point, then end point. Circle: centre then a point on it. Dot: click. Cut mask: click polygon corners, Enter finishes; the red area is subtracted from the finished outline (good for trimming joins flush with the cap or baseline; "Clip to rows" does that for the whole glyph). Fill: click polygon corners, Enter finishes; the polygon is solid ink with no stroke width (the arrows are drawn this way). Any selected stroke can also be edited as raw JSON under its properties.</p>
     <div class="renders"><span class="r-vector" id="rv"></span><span class="r-game" id="rg"></span><span class="hint">← actual TTFs (Pixel Vector / Rounded Game as currently built)</span></div>
   </div>
   <aside class="sheet panel">
