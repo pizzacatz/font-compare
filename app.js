@@ -212,11 +212,20 @@ function renderMetrics() {
 function sampleText(id) {
   if (id === 'custom') return state.custom;
   if (id === '__all') return SAMPLES.flatMap((g) => g.lines).join('\n') + '\n';
+  if (id === '__glyphs') return glyphLines().join('\n') + '\n';
   const g = SAMPLES.find((g) => g.group === id); return g ? g.lines.join('\n') + '\n' : '';
+}
+/* Every character the current font maps, a line per kind */
+function glyphLines() {
+  const all = (M('vector').chars || []).filter((c) => c > 0x20).map((c) => String.fromCodePoint(c));
+  const KINDS = [['A-Z', /^[A-Z]$/], ['a-z', /^[a-z]$/], ['0-9', /^[0-9]$/], ['accented', /^\p{L}$/u], ['PUA', /^[\uE000-\uF8FF]$/], ['other', /./su]];
+  const lines = KINDS.map(() => []);
+  for (const ch of all) lines[KINDS.findIndex(([, re]) => re.test(ch))].push(ch);
+  return lines.filter((l) => l.length).map((l) => l.join(''));
 }
 function buildSampleSelect() {
   const sel = $('sample');
-  sel.replaceChildren(...[['__all', 'All samples'], ...SAMPLES.map((g) => [g.group, g.group]), ['custom', 'Your text']].map(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; return o; }));
+  sel.replaceChildren(...[['__all', 'All samples'], ['__glyphs', 'Every glyph in this font'], ...SAMPLES.map((g) => [g.group, g.group]), ['custom', 'Your text']].map(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; return o; }));
   if (![...sel.options].some((o) => o.value === state.sample)) state.sample = SAMPLES[0]?.group || '__all';
   sel.value = state.sample;
 }
@@ -240,7 +249,7 @@ $('ls').addEventListener('input', (e) => { state.ls = Number(e.target.value); ap
 $('sample').addEventListener('change', (e) => { state.sample = e.target.value; src.value = sampleText(state.sample); renderStage(); save(); });
 src.addEventListener('input', () => { state.custom = src.value; if (state.sample !== 'custom') { state.sample = 'custom'; $('sample').value = 'custom'; } renderStage(); save(); });
 $('cmp').addEventListener('change', (e) => { state.cmp = e.target.value; save(); remeasure(); });
-$('font').addEventListener('change', (e) => { state.font = e.target.value; save(); applyFont(); });
+$('font').addEventListener('change', (e) => { state.font = e.target.value; save(); if (state.sample === '__glyphs') src.value = sampleText('__glyphs'); applyFont(); });
 $('set').addEventListener('change', (e) => { state.set = e.target.value; save(); remeasure(); });
 $('sort').addEventListener('change', (e) => { state.sort = e.target.value; renderGrid(); save(); });
 grid.addEventListener('click', (e) => { const b = e.target.closest('.cell'); if (!b) return; state.sel = b.dataset.ch; for (const c of grid.children) c.setAttribute('aria-pressed', String(c === b)); drawLoupe(); });

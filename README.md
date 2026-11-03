@@ -39,6 +39,9 @@ described in its README; the comparison sheet works without it.
   widths and the 16 px pixel grid.
 - **Metrics** table read from the TTFs by `gen_metrics.py`.
 - Sample text groups live in `samples.json`. Your own text is kept in localStorage.
+- "Every glyph in this font" in the Sample menu lists every character the chosen font maps, a line each for
+  capitals, lowercase, digits, accented letters, game symbols and the rest. Long lines wrap to the sheet's
+  width at any size, so the specimen never scrolls sideways.
 
 ## The glyph editor (`/editor.html`)
 
