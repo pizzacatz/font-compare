@@ -30,6 +30,9 @@ function useFonts(bust) {
   st.textContent = `@font-face { font-family: "Ed Vector ${id}"; src: url("fonts/EmeraldPixelVector${f}-Regular.ttf${q}"); }
     @font-face { font-family: "Ed Game ${id}"; src: url("fonts/EmeraldRounded${f}Game-Regular.ttf${q}"); }`;
   document.head.appendChild(st); $('rv').style.fontFamily = `"Ed Vector ${id}"`; $('rg').style.fontFamily = `"Ed Game ${id}"`;
+  // the character fields in the font itself; the glyph menus fall back to it for the game symbols (PUA), which no system font has
+  for (const el of ['ch', 'chars']) $(el).style.fontFamily = `"Ed Game ${id}", system-ui, sans-serif`;
+  for (const el of ['allglyphs', 'existing']) $(el).style.fontFamily = `system-ui, sans-serif, "Ed Game ${id}"`;
 }
 
 const snapv = (v) => snap ? Math.round(v / snap) * snap : Math.round(v * 1000) / 1000;
@@ -243,7 +246,9 @@ async function load(ch) {
   const top = (c) => Object.values(mp).find((e) => e.unicode.includes(c.codePointAt(0)))?.ink_ymin;
   guides = [top('H'), top('x'), VARIANTS[variant].base];
   const ov = await (await fetch(`/api/overrides?variant=${variant}`)).json();
-  const hit = Object.entries(ov).find(([n, s]) => (Array.isArray(s.char) ? s.char : [s.char]).includes(ch));
+  // an override saved under any of the glyph's code points (★ U+2605 or its PUA U+E119) is the same glyph
+  const same = new Set([cp, ...(info.codepoints || []), ...(mapping.unicode || [])]);
+  const hit = Object.entries(ov).find(([n, s]) => (Array.isArray(s.char) ? s.char : [s.char]).some((c) => c && same.has(c.codePointAt(0))));
   if (hit) { [name, spec] = [hit[0], hit[1]]; log(`Loaded ${VARIANTS[variant].label} override ${name}.json` + (spec._ported ? ` (${spec._ported})` : '')); }
   else { name = `u${ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}`; spec = { char: ch, rows: [0, 16], width: 1.0, joint_radius: 0, join: 'miter', strokes: [], dots: [] }; log(`No override yet for "${ch}": starting empty (auto trace shown dashed). Use "Seed from auto trace" or draw.`); }
   $('rv').textContent = ch; $('rg').textContent = ch;
@@ -335,7 +340,7 @@ async function fillAllGlyphs() {
   for (const gid of Object.keys(cps).map(Number).sort((a, b) => a - b)) {
     const e = cps[gid]; if (!mp[gid] || !mp[gid].ink) continue;
     const c = String.fromCodePoint(e.codepoints[0]); const o = document.createElement('option'); o.value = c;
-    o.textContent = `${gid}  ${e.source === 'charmap' ? c : (e.codepoints.length > 1 ? String.fromCodePoint(e.codepoints[1]) : '')}  U+${e.codepoints[0].toString(16).toUpperCase().padStart(4, '0')}${e.name ? '  ' + e.name.replace(/^ext\./, '') : ''}`;
+    o.textContent = `${gid}  ${c}  U+${e.codepoints[0].toString(16).toUpperCase().padStart(4, '0')}${e.name ? '  ' + e.name.replace(/^ext\./, '') : ''}`;
     (og[e.source] || og.charmap).appendChild(o);
   }
   sel.onchange = (ev) => { if (ev.target.value) load(ev.target.value); };
